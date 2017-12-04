@@ -14,8 +14,11 @@ def togglePriority():
 
 def avoidStarvation(currentThreadNumber):
     global priority,waitingList
+    target=togglePriority()
     for thread in waitingList:
-        #TODO
+        if(thread.name==target and thread.number<=currentThreadNumber):
+            thread.start()
+            del(thread)
 
 
 class Generator(threading.Thread):
@@ -27,9 +30,9 @@ class Generator(threading.Thread):
             time.sleep(getRandomInterval())
             choice=random.randint(0,1)
             if(choice):
-                waitingList.append(#reader TODO)
+                waitingList.append()#reader TODO
             else:
-                waitingList.append(#writer TODO)
+                waitingList.append()#writer TODO
 
 class Scheduler(threading.Thread):
     def __init__(self):
@@ -39,6 +42,7 @@ class Scheduler(threading.Thread):
         global waitingList
         global starveThreshold
         global priority
+        global currentRunThreadCount
         counter={'Writer':0,'Reader':0}
         currentThreadNumber=0
         while(True):
@@ -50,6 +54,9 @@ class Scheduler(threading.Thread):
                         currentThreadNumber=thread.number
                         avoidStarvation(currentThreadNumber)
                         counter[priority]=0
+                    del(thread)
+                elif(currentRunThreadCount==0):
+                    thread.start()
                     del(thread)
                 else:
                     continue
