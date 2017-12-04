@@ -10,6 +10,7 @@ to run. Starvation of readers is a possibility here.
 (b) Problem RW2. No writer is permitted to start running if there are any waiting readers.
 Here it is possible to starve the writers.
 </pre>
+https://docs.google.com/document/d/1LMssST-uJ6HffqkGv9KrR3-QaEQpjNM-aqea7vgg-eY/edit
 <h2>TODO</h2>
 <ol>
 <li>Controler</li>
