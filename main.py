@@ -1,14 +1,10 @@
-import SystemControl
+import SystemControl,Book,globcfg
 
 def main():
-    waitingList=[]
-    starveThreshold=5
-    priority='Writer'
-    threadNumber=0
-    currentRunThreadCount=0
-
-    generator=SystemControl.Generator()
+    book=Book.Book()
+    generator=SystemControl.Generator(book)
     scheduler=SystemControl.Scheduler()
+
     generator.start()
     scheduler.start()
 

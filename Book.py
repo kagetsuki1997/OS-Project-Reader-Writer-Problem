@@ -1,4 +1,4 @@
-import threading
+import threading,globcfg
 
 
 class Book:
@@ -17,8 +17,7 @@ class Book:
             self.readers += 1
             self.condR.notify()
         finally:
-            global currentRunThreadCount
-            currentRunThreadCount = currentRunThreadCount + 1
+            globcfg.currentRunThreadCount+=1
             self.condR.release()
 
     def end_reading(self):
@@ -28,8 +27,7 @@ class Book:
             if self.readers == 0:
                 self.condW.notify()
         finally:
-            global currentRunThreadCount
-            currentRunThreadCount = currentRunThreadCount - 1
+            globcfg.currentRunThreadCount-=1
             self.condR.release()
 
     def want_to_write(self):
@@ -39,8 +37,7 @@ class Book:
                 self.condW.wait()
             self.writers += 1
         finally:
-            global currentRunThreadCount
-            currentRunThreadCount = currentRunThreadCount + 1
+            globcfg.currentRunThreadCount+=1
             self.condR.release()
 
     def end_writing(self):
@@ -51,6 +48,5 @@ class Book:
                 self.condR.notify()
             self.condW.notify()
         finally:
-            global currentRunThreadCount
-            currentRunThreadCount = currentRunThreadCount - 1
+            globcfg.currentRunThreadCount-=1
             self.condR.release()
