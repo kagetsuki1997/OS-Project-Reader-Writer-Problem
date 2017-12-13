@@ -17,7 +17,7 @@ class Reader(threading.Thread):
         print("The reader " + str(self.id) + " comes to the reading room")
         self.book.want_to_read()
         print("The reader " + str(self.id) + " begins reading")
-        time.sleep(random.randint(1,5))
+        time.sleep(random.expovariate(1/globcfg.lamRW)/10)
         print("The reader " + str(self.id) + " ends reading")
         self.book.end_reading()
         print("The reader " + str(self.id) + " leaves the reading room")

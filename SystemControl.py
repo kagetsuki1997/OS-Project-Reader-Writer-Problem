@@ -21,7 +21,7 @@ def avoidStarvation(currentThreadNumber):
 
     while(globcfg.currentRunThreadCount['Writer']!=0 or globcfg.currentRunThreadCount['Reader']!=0):
         print("[avoidStarvation]Wait for current running threads done...")
-        time.sleep(random.randint(1,5))
+        time.sleep(1)
 
     print("--Avoid Starvation Progress Start--")
 
@@ -42,7 +42,7 @@ class Generator(threading.Thread):
         print("[log]Generator start...")
         while(True):
             print("[log]currentRunThread: Reader= {readCount}, Writer= {writeCount}".format(readCount=globcfg.currentRunThreadCount['Reader'],writeCount=globcfg.currentRunThreadCount['Writer']))
-            time.sleep(getRandomInterval())
+            time.sleep(getRandomInterval(globcfg.lamGen))
             choice=random.randint(0,1)
             if(choice):
                 print("[log]Generate thread {number} : {name}".format(number=globcfg.threadNumber,name="Reader"))

@@ -17,7 +17,7 @@ class Writer(threading.Thread):
         print ("The writer " + str(self.id) + " comes to the writing room")
         self.book.want_to_write()
         print ("The writer " + str(self.id) + " begins writing")
-        time.sleep(random.randint(1,5))
+        time.sleep(random.expovariate(1 / globcfg.lamRW)/10)
         print ("The writer " + str(self.id) + " ends writing")
         self.book.end_writing()
         print ("The writer " + str(self.id) + " leaves the writing room")
