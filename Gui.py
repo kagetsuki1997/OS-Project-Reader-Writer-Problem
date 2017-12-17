@@ -4,7 +4,7 @@ import threading
 import time
 
 # Colors
-# 定義顏色的rgb值
+# Define rgb value for colors
 Black = (0, 0, 0)
 White = (255, 255, 255)
 Red = (255, 0, 0)
@@ -36,14 +36,15 @@ class Gui():
         #     self.w_waiting.append((letter, i + 1))
         #     self.r_waiting.append((letter, i + 1))
         #     self.filing.append((letter, i + 1))
+
     def animation(self, letterFontSize, titleBarWidth, normalBarWidth):
         #######################################################################
-        ##                         版型與大小(可調整)                         ####
+        ##                    Design and size of Display                   ####
         #######################################################################
         # letter(writer,reader)
-        # 以英文字W代表writer, R代表rider
-        # 其字母右下有小數字來區別不同的writer, 和不同的rider, 譬如可以定義Wn 是第n個writer
-        # 我們可以調整字母的字體大小，letter_rect 是字母的文字框
+        # letter 'W' for writer, 'R' for reader
+        # There's small number at right-bottom of letter, to represent id and distinguish different writers or readers
+        # we can adjust font of letter to change the size of blocks of the display
         self.letter_font_size = letterFontSize
         self.letter_rect_size = self.letter_width, self.letter_height\
                          = self.PtToPixel(self.letter_font_size), self.PtToPixel(self.letter_font_size)
@@ -51,18 +52,18 @@ class Gui():
                      = self.letter_width / 2, self.letter_height / 2
         self.id_font_size = self.PixelToPt(self.id_rect_height)
         # Bar
-        # 分成要寫欄位title在上面的分隔線寬度和一般的分隔線寬度
+        # we will write title of block on text bar
         text_bar_width = titleBarWidth
         title_font_size = self.PixelToPt(text_bar_width)
         normal_bar_width = normalBarWidth
         # Scheduling Block
-        # 設定scheduling block 可以容納幾乘幾個字母，來決定的此block的大小
+        # set how many letters can scheduling block constains, by this, we decide the size of block
         schedule_capacity = schedule_num_row, schedule_num_col \
                           = 2, (self.window_width / self.letter_width)
         schedule_size = schedule_width, schedule_height \
                       = self.window_width, (schedule_num_row * self.letter_height)
         schedule_point = schedule_x, schedule_y = 0, text_bar_width
-        # 除去scheduling block和分隔線所佔的空間，大概分成三份給writer wait, file, reader_wait
+        # the rest space from space of scheduling block and bars，divide into about equally three piece to writer wait, file, reader_wait
         # Writer_wait
         w_wait_size = w_wait_width, w_wait_height \
                     = ((self.window_width - 2 * normal_bar_width) / 3), \
@@ -87,7 +88,7 @@ class Gui():
                       = (file_height / self.letter_height), (file_width / self.letter_width)
 
         ####################################################################
-        ####                        主要的動畫Loop                      ####
+        ####                   Main Animation Loop                      ####
         ####################################################################
         while True:
 
@@ -99,8 +100,8 @@ class Gui():
 
             # Draw Things
             self.gameWindow.fill(Black)
-            # draw_block 是畫欄位的裏面部份，沒有被覆蓋到的背景就會成為區隔線部份
-            # draw_text 則是在區隔線部份上印字，當作該欄位的title
+            # draw_block draw the block and where didn't be drawned in the background becomes bars
+            # draw_text print text on text bar to be the block's title
             self.draw_block(schedule_x, schedule_y, schedule_width,
                             schedule_height, White)
             self.draw_text_in_middle("Scheduling", 0, 0, schedule_width,
@@ -121,14 +122,15 @@ class Gui():
                                      title_font_size)
 
             self.lists_lock.acquire()
-            # 把各欄位上的writer和reader 畫上去
+            # draw readers and writers contained by each blocks
             self.draw_list(self.scheduling, schedule_x, schedule_y,
                            schedule_num_row, schedule_num_col, "horizontal")
-            self.draw_list(self.w_waiting, w_wait_x, w_wait_y,
-                           w_wait_num_row, w_wait_num_col, "vertical")
-            self.draw_list(self.r_waiting, r_wait_x, r_wait_y,
-                           r_wait_num_row, r_wait_num_col, "vertical")
-            self.draw_list(self.filing, file_x, file_y, file_num_row, file_num_col, "vertical")
+            self.draw_list(self.w_waiting, w_wait_x, w_wait_y, w_wait_num_row,
+                           w_wait_num_col, "vertical")
+            self.draw_list(self.r_waiting, r_wait_x, r_wait_y, r_wait_num_row,
+                           r_wait_num_col, "vertical")
+            self.draw_list(self.filing, file_x, file_y, file_num_row,
+                           file_num_col, "vertical")
             self.lists_lock.release()
 
             # Update
@@ -139,7 +141,6 @@ class Gui():
     ####                          Interface                          ####
     #####################################################################
 
-    
     def change_state(self, accessTypeChar, idNumber, fromList, toList):
         self.lists_lock.acquire()
         # Get out of block where it is now
@@ -149,7 +150,6 @@ class Gui():
         toList.append((accessTypeChar, idNumber))
         self.lists_lock.release()
 
-        
     def test_ers(self):
         i = 0
         while True:
@@ -168,7 +168,7 @@ class Gui():
             self.lists_lock.release()
 
     ###########################################################################
-    ####                            繪圖工具                                ###
+    ####                       Drawing Tools                                ###
     ###########################################################################
     # 1 pt = 0.0358 cm, 1 cm = 37.795276 pixels
     def PtToPixel(self, pt):
@@ -179,17 +179,15 @@ class Gui():
         # Don't know why, floor will return XX.0 instead fo an integer like when I compile it at repl.com
         return int(math.floor(pixel / 37.79256 / 0.0358))
 
-    # 每個欄位都maintain一個list，儲存在該欄位的writers/readers
-    # 此function就是把list裡的writers 和 readers 畫到該欄位
+    # every block maintain a list to store the readers and writers in this state
+    # this functions draw the writers and readers of a block
     def draw_list(self, l, Block_x, Block_y, num_row, num_col, pattern):
-        print(Block_x, Block_y, num_row, num_col, pattern)
         if pattern == "horizontal":
             for index, er in enumerate(l):
                 c = index % num_col
                 r = index / num_col
                 x = c * self.letter_width + Block_x
                 y = r * self.letter_height + Block_y
-                print(er[0], x, y, er[1])
                 self.draw_er(er[0], x, y, er[1])
         else:
             for index, er in enumerate(l):
@@ -199,9 +197,8 @@ class Gui():
                 y = r * self.letter_height + Block_y
                 self.draw_er(er[0], x, y, er[1])
 
-    # 畫象徵writer/reader 的 W/R
+    # Draw W/R which represents writer/reader
     def draw_er(self, letter, x, y, idNumber):
-        # 以(x,y)處為文字框左上角，依預先定好的字體大小，畫letter("R"/"W")上去，並在右下畫區別用的小數字
         self.draw_text_in_middle(letter, x, y, self.letter_width,
                                  self.letter_height, Black,
                                  self.letter_font_size)
@@ -210,16 +207,15 @@ class Gui():
             (self.letter_height - self.id_rect_height + y), self.id_rect_width,
             self.id_rect_height, Red, self.id_font_size)
 
-    # 畫出Block
+    # Draw Block
     def draw_block(self, x, y, w, h, color):
-        # 給左上頂點(x,y)和self.長寬，定義出長方self.形，並決定裏面填的顏色
         pygame.draw.rect(self.gameWindow, color, [x, y, w, h])
 
     def text_ojects(self, msg, font, color):
         textSurface = font.render(msg, True, color)
         return textSurface, textSurface.get_rect()
 
-    # 給定一長方形區域，將給定字體大小的文字畫在其置中處
+    # Given a Rectangle area, draw text in the middle of it
     def draw_text_in_middle(self, txt, x, y, w, h, color, font_size):
         font = pygame.font.SysFont(None, font_size)
         TextSurf, TextRect = self.text_ojects(txt, font, color)
@@ -240,6 +236,52 @@ class GuiRunner(threading.Thread):
             self.mygui.test_ers()
 
 
-g = Gui()
-GuiRunner(g, "animation").start()
-GuiRunner(g, "test_ers").start()
+# How to use this GUI
+'''Example of main:
+from Writer import Writer
+from Reader import Reader
+from Book import Book
+from GG import Gui
+from GG import GuiRunner
+
+def main():
+    b = Book()
+    g = Gui()
+    GuiRunner(g, "animation").start()
+
+    g.change_state("W", 7, g.nowhere, g.scheduling)
+    Writer(b, 7, g).start()
+    for i in range(0, 3):
+        g.change_state("R", i, g.nowhere, g.scheduling)
+        Reader(b, i, g).start()
+
+    for i in range(0, 2):
+        g.change_state("W", i, g.nowhere, g.scheduling)
+        Writer(b, i, g).start()
+
+main()
+'''
+'''Example of reader
+import threading
+import time
+from GG import Gui
+
+class Reader(threading.Thread):
+    def __init__(self, book, tid, g):
+        threading.Thread.__init__(self)
+        self.book = book
+        self.tid = tid
+        self.gui = g
+
+    def run(self):
+        print("The reader " + str(self.tid) + " comes to the reading room")
+        self.gui.change_state("R", self.tid, self.gui.scheduling, self.gui.r_waiting)
+        self.book.want_to_read()
+        print("The reader " + str(self.tid) + " begins reading")
+        self.gui.change_state("R", self.tid, self.gui.r_waiting, self.gui.filing)
+        time.sleep(3)
+        print("The reader " + str(self.tid) + " ends reading")
+        self.gui.change_state("R", self.tid, self.gui.filing, self.gui.scheduling)
+        self.book.end_reading()
+        print("The reader " + str(self.tid) + " leaves the reading room")
+'''
