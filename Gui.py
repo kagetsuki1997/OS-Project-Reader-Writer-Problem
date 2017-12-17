@@ -1,34 +1,42 @@
 import pygame
 import math
 import threading
+import time
+
+# Colors
+# 定義顏色的rgb值
+Black = (0, 0, 0)
+White = (255, 255, 255)
+Red = (255, 0, 0)
 
 
-class Gui(threading.Thread):
+class Gui():
     def __init__(self):
+        # Initiate Pygame and Display window
         pygame.init()
         self.window_size = self.window_width, self.window_height = 1300, 700
         self.gameWindow = pygame.display.set_mode(self.window_size)
         pygame.display.set_caption("RW")
         self.clock = pygame.time.Clock()
 
-        # Colors
-        # 定義顏色的rgb值
-        self.black = (0, 0, 0)
-        self.white = (255, 255, 255)
-        self.red = (255, 0, 0)
+        # The lists of reader/ writer for the blocks and lock for these lists
+        self.scheduling = []
+        self.w_waiting = []
+        self.filing = []
+        self.r_waiting = []
+        self.nowhere = []
+        self.lists_lock = threading.Lock()
 
-        self.animation(50, 50, 5)
-
+        # test list input
+        # for i in range(20):
+        #     letter = "R"
+        #     if i % 2 == 0:
+        #         letter = "W"
+        #     self.scheduling.append((letter, i + 1))
+        #     self.w_waiting.append((letter, i + 1))
+        #     self.r_waiting.append((letter, i + 1))
+        #     self.filing.append((letter, i + 1))
     def animation(self, letterFontSize, titleBarWidth, normalBarWidth):
-        # list
-        # 測試用的list
-        schedule_list = []
-        for i in range(20):
-            lett = "W"
-            if i % 2 == 0:
-                lett = "R"
-            schedule_list.append((lett, i + 1))
-
         #######################################################################
         ##                         版型與大小(可調整)                         ####
         #######################################################################
@@ -61,13 +69,13 @@ class Gui(threading.Thread):
                     (self.window_height - schedule_height - 2 * text_bar_width)
         w_wait_point = w_wait_x, w_wait_y = 0, (
             self.window_height - w_wait_height)
-        w_wait_capacity = w_num_row, w_num_col \
+        w_wait_capacity = w_wait_num_row, w_wait_num_col \
                         = (w_wait_height / self.letter_height), (w_wait_width / self.letter_width)
         # reader_wait
         r_wait_size = r_wait_width, r_wait_height = w_wait_width, w_wait_height
         r_wait_point = r_wait_x, r_wait_y = (
             self.window_width - r_wait_width), w_wait_y
-        r_wait_capacity = r_num_row, r_num_col \
+        r_wait_capacity = r_wait_num_row, r_wait_num_col \
                         = (r_wait_height / self.letter_height), (r_wait_width / self.letter_width)
         # file
         file_size = file_width, file_height \
@@ -82,51 +90,82 @@ class Gui(threading.Thread):
         ####                        主要的動畫Loop                      ####
         ####################################################################
         while True:
-            # Detect QUIT
+
+            # detect quit
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
                     quit()
 
             # Draw Things
-            self.gameWindow.fill(self.black)
+            self.gameWindow.fill(Black)
             # draw_block 是畫欄位的裏面部份，沒有被覆蓋到的背景就會成為區隔線部份
             # draw_text 則是在區隔線部份上印字，當作該欄位的title
             self.draw_block(schedule_x, schedule_y, schedule_width,
-                            schedule_height, self.white)
+                            schedule_height, White)
             self.draw_text_in_middle("Scheduling", 0, 0, schedule_width,
-                                     text_bar_width, self.white,
-                                     title_font_size)
+                                     text_bar_width, White, title_font_size)
             self.draw_block(w_wait_x, w_wait_y, w_wait_width, w_wait_height,
-                            self.white)
-            self.draw_text_in_middle(
-                "Writer_wait", w_wait_x, (w_wait_y - text_bar_width),
-                w_wait_width, text_bar_width, self.white, title_font_size)
+                            White)
+            self.draw_text_in_middle("Writer_wait", w_wait_x,
+                                     (w_wait_y - text_bar_width), w_wait_width,
+                                     text_bar_width, White, title_font_size)
             self.draw_block(r_wait_x, r_wait_y, r_wait_width, r_wait_height,
-                            self.white)
-            self.draw_text_in_middle(
-                "Reader_wait", r_wait_x, (r_wait_y - text_bar_width),
-                r_wait_width, text_bar_width, self.white, title_font_size)
-            self.draw_block(file_x, file_y, file_width, file_height,
-                            self.white)
+                            White)
+            self.draw_text_in_middle("Reader_wait", r_wait_x,
+                                     (r_wait_y - text_bar_width), r_wait_width,
+                                     text_bar_width, White, title_font_size)
+            self.draw_block(file_x, file_y, file_width, file_height, White)
             self.draw_text_in_middle("File", file_x, (file_y - text_bar_width),
-                                     file_width, text_bar_width, self.white,
+                                     file_width, text_bar_width, White,
                                      title_font_size)
 
-            # 試印W/R 於scheduling block
-            for e in schedule_list:
-                n = e[1]
-                n -= 1
-                x = n % schedule_num_col * self.letter_width + 0
-                y = 0
-                if n >= schedule_num_col:
-                    y = 1
-                y = y * self.letter_height + schedule_y
-                self.draw_er(e[0], x, y, e[1])
+            self.lists_lock.acquire()
+            # 把各欄位上的writer和reader 畫上去
+            self.draw_list(self.scheduling, schedule_x, schedule_y,
+                           schedule_num_row, schedule_num_col, "horizontal")
+            self.draw_list(self.w_waiting, w_wait_x, w_wait_y,
+                           w_wait_num_row, w_wait_num_col, "vertical")
+            self.draw_list(self.r_waiting, r_wait_x, r_wait_y,
+                           r_wait_num_row, r_wait_num_col, "vertical")
+            self.draw_list(self.filing, file_x, file_y, file_num_row, file_num_col, "vertical")
+            self.lists_lock.release()
 
             # Update
             pygame.display.update()
             self.clock.tick(60)
+
+    #####################################################################
+    ####                          Interface                          ####
+    #####################################################################
+
+    
+    def change_state(self, accessTypeChar, idNumber, fromList, toList):
+        self.lists_lock.acquire()
+        # Get out of block where it is now
+        if fromList is not self.nowhere:
+            fromList.remove((accessTypeChar, idNumber))
+        # Move to block assingend
+        toList.append((accessTypeChar, idNumber))
+        self.lists_lock.release()
+
+        
+    def test_ers(self):
+        i = 0
+        while True:
+            self.lists_lock.acquire()
+            print i
+            if i % 4 == 0:
+                self.scheduling.append(("W", i))
+            elif i % 4 == 1:
+                self.w_waiting.append(("W", i))
+            elif i % 4 == 2:
+                self.r_waiting.append(("R", i))
+            else:
+                self.filing.append(("R", i))
+            i = i + 1
+            time.sleep(1)
+            self.lists_lock.release()
 
     ###########################################################################
     ####                            繪圖工具                                ###
@@ -140,17 +179,36 @@ class Gui(threading.Thread):
         # Don't know why, floor will return XX.0 instead fo an integer like when I compile it at repl.com
         return int(math.floor(pixel / 37.79256 / 0.0358))
 
+    # 每個欄位都maintain一個list，儲存在該欄位的writers/readers
+    # 此function就是把list裡的writers 和 readers 畫到該欄位
+    def draw_list(self, l, Block_x, Block_y, num_row, num_col, pattern):
+        print(Block_x, Block_y, num_row, num_col, pattern)
+        if pattern == "horizontal":
+            for index, er in enumerate(l):
+                c = index % num_col
+                r = index / num_col
+                x = c * self.letter_width + Block_x
+                y = r * self.letter_height + Block_y
+                print(er[0], x, y, er[1])
+                self.draw_er(er[0], x, y, er[1])
+        else:
+            for index, er in enumerate(l):
+                r = index % num_row
+                c = index / num_row
+                x = c * self.letter_width + Block_x
+                y = r * self.letter_height + Block_y
+                self.draw_er(er[0], x, y, er[1])
+
     # 畫象徵writer/reader 的 W/R
     def draw_er(self, letter, x, y, idNumber):
         # 以(x,y)處為文字框左上角，依預先定好的字體大小，畫letter("R"/"W")上去，並在右下畫區別用的小數字
         self.draw_text_in_middle(letter, x, y, self.letter_width,
-                                 self.letter_height, self.black,
+                                 self.letter_height, Black,
                                  self.letter_font_size)
         self.draw_text_in_middle(
             str(idNumber), (self.letter_width - self.id_rect_width + x),
-            (self.letter_height - self.id_rect_height + y),
-            self.id_rect_width, self.id_rect_height, self.red,
-            self.id_font_size)
+            (self.letter_height - self.id_rect_height + y), self.id_rect_width,
+            self.id_rect_height, Red, self.id_font_size)
 
     # 畫出Block
     def draw_block(self, x, y, w, h, color):
@@ -169,4 +227,19 @@ class Gui(threading.Thread):
         self.gameWindow.blit(TextSurf, TextRect)
 
 
+class GuiRunner(threading.Thread):
+    def __init__(self, gui, act):
+        threading.Thread.__init__(self)
+        self.mygui = gui
+        self.action = act
+
+    def run(self):
+        if self.action == "animation":
+            self.mygui.animation(50, 50, 5)
+        else:
+            self.mygui.test_ers()
+
+
 g = Gui()
+GuiRunner(g, "animation").start()
+GuiRunner(g, "test_ers").start()
