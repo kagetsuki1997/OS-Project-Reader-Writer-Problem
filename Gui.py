@@ -49,7 +49,7 @@ class Gui():
         self.letter_rect_size = self.letter_width, self.letter_height\
                          = self.PtToPixel(self.letter_font_size), self.PtToPixel(self.letter_font_size)
         self.id_rect_size = self.id_rect_width, self.id_rect_height\
-                     = self.letter_width / 2, self.letter_height / 2
+                     = int(self.letter_width / 2), int(self.letter_height / 2)
         self.id_font_size = self.PixelToPt(self.id_rect_height)
         # Bar
         # we will write title of block on text bar
@@ -59,25 +59,25 @@ class Gui():
         # Scheduling Block
         # set how many letters can scheduling block constains, by this, we decide the size of block
         schedule_capacity = schedule_num_row, schedule_num_col \
-                          = 2, (self.window_width / self.letter_width)
+                          = 2, int(self.window_width / self.letter_width)
         schedule_size = schedule_width, schedule_height \
                       = self.window_width, (schedule_num_row * self.letter_height)
         schedule_point = schedule_x, schedule_y = 0, text_bar_width
         # the rest space from space of scheduling block and bars，divide into about equally three piece to writer wait, file, reader_wait
         # Writer_wait
         w_wait_size = w_wait_width, w_wait_height \
-                    = ((self.window_width - 2 * normal_bar_width) / 3), \
+                    = int((self.window_width - 2 * normal_bar_width) / 3), \
                     (self.window_height - schedule_height - 2 * text_bar_width)
         w_wait_point = w_wait_x, w_wait_y = 0, (
             self.window_height - w_wait_height)
         w_wait_capacity = w_wait_num_row, w_wait_num_col \
-                        = (w_wait_height / self.letter_height), (w_wait_width / self.letter_width)
+                        = int(w_wait_height / self.letter_height), int(w_wait_width / self.letter_width)
         # reader_wait
         r_wait_size = r_wait_width, r_wait_height = w_wait_width, w_wait_height
         r_wait_point = r_wait_x, r_wait_y = (
             self.window_width - r_wait_width), w_wait_y
         r_wait_capacity = r_wait_num_row, r_wait_num_col \
-                        = (r_wait_height / self.letter_height), (r_wait_width / self.letter_width)
+                        = int(r_wait_height / self.letter_height), int(r_wait_width / self.letter_width)
         # file
         file_size = file_width, file_height \
                   = (self.window_width - w_wait_width - r_wait_width
@@ -85,7 +85,7 @@ class Gui():
         file_point = file_x, file_y = (
             w_wait_width + normal_bar_width), w_wait_y
         file_capacity = file_num_row, file_num_col \
-                      = (file_height / self.letter_height), (file_width / self.letter_width)
+                      = int(file_height / self.letter_height), int(file_width / self.letter_width)
 
         ####################################################################
         ####                   Main Animation Loop                      ####
@@ -185,14 +185,14 @@ class Gui():
         if pattern == "horizontal":
             for index, er in enumerate(l):
                 c = index % num_col
-                r = index / num_col
+                r = int(index / num_col)
                 x = c * self.letter_width + Block_x
                 y = r * self.letter_height + Block_y
                 self.draw_er(er[0], x, y, er[1])
         else:
             for index, er in enumerate(l):
                 r = index % num_row
-                c = index / num_row
+                c = int(index / num_row)
                 x = c * self.letter_width + Block_x
                 y = r * self.letter_height + Block_y
                 self.draw_er(er[0], x, y, er[1])
