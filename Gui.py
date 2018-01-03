@@ -59,7 +59,7 @@ class Gui():
         # Scheduling Block
         # set how many letters can scheduling block constains, by this, we decide the size of block
         schedule_capacity = schedule_num_row, schedule_num_col \
-                          = 2, int(self.window_width / self.letter_width)
+                          = 4, int(self.window_width / self.letter_width)
         schedule_size = schedule_width, schedule_height \
                       = self.window_width, (schedule_num_row * self.letter_height)
         schedule_point = schedule_x, schedule_y = 0, text_bar_width
@@ -143,18 +143,21 @@ class Gui():
 
     def change_state(self, accessTypeChar, idNumber, fromList, toList):
         self.lists_lock.acquire()
+        
         # Get out of block where it is now
         if fromList is not self.nowhere:
             fromList.remove((accessTypeChar, idNumber))
         # Move to block assingend
-        toList.append((accessTypeChar, idNumber))
+        if toList is not self.nowhere:
+            toList.append((accessTypeChar, idNumber))
+            
         self.lists_lock.release()
 
     def test_ers(self):
         i = 0
         while True:
             self.lists_lock.acquire()
-            print i
+            print (i)
             if i % 4 == 0:
                 self.scheduling.append(("W", i))
             elif i % 4 == 1:

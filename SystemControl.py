@@ -34,9 +34,10 @@ def avoidStarvation(currentThreadId):
 
 
 class Generator(threading.Thread):
-    def __init__(self,book):
+    def __init__(self,book, g):
         super(Generator,self).__init__()
         self.book=book
+        self.gui = g
         self.lock=threading.Lock()
     def run(self):
         print("[log]Generator start...")
@@ -47,10 +48,12 @@ class Generator(threading.Thread):
             #noWhere→scheduling(產生thread到scheduler但還沒run)
             if(choice):
                 print("[log]Generate thread {number} : {name}".format(number=globcfg.threadNumber,name="Reader"))
-                globcfg.waitingList.append(Reader.Reader(self.book,self.lock,globcfg.threadNumber)) #new Reader
+                self.gui.change_state("R", globcfg.threadNumber, self.gui.nowhere, self.gui.scheduling)
+                globcfg.waitingList.append(Reader.Reader(self.book,self.lock,globcfg.threadNumber, self.gui)) #new Reader
             else:
                 print("[log]Generate thread {number} : {name}".format(number=globcfg.threadNumber, name="Writer"))
-                globcfg.waitingList.append(Writer.Writer(self.book,self.lock,globcfg.threadNumber)) #new Writer
+                self.gui.change_state("W", globcfg.threadNumber, self.gui.nowhere, self.gui.scheduling)
+                globcfg.waitingList.append(Writer.Writer(self.book,self.lock,globcfg.threadNumber, self.gui)) #new Writer
             globcfg.threadNumber+=1
 
 class Scheduler(threading.Thread):

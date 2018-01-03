@@ -1,6 +1,5 @@
 import threading,globcfg
 
-
 class Book:
     def __init__(self):
         self.writers = 0 #current writing 0~1
