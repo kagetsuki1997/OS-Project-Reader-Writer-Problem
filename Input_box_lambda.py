@@ -3,7 +3,7 @@ import globcfg
 
 window = tk.Tk()
 window.title('my window')
-window.geometry('200x200')
+window.geometry('500x300')
 
 e = tk.Entry(window)
 e.pack()

@@ -15,7 +15,7 @@ def togglePriority():
     else:
         return 'Writer'
 
-def avoidStarvation(currentThreadNumber):
+def avoidStarvation(currentThreadId):
     target=togglePriority()
     print("**Starvation Detected**\n {priority}s, you are too greedy!\nLet's give {target} a chance~".format(priority=globcfg.priority,target=target))
 
@@ -26,7 +26,7 @@ def avoidStarvation(currentThreadNumber):
     print("--Avoid Starvation Progress Start--")
 
     for thread in globcfg.waitingList:
-        if(thread.name==target and thread.id <= currentThreadNumber and not thread.on):
+        if(thread.name==target and thread.id <= currentThreadId and not thread.on):
             globcfg.currentRunThreadCount[target] += 1
             thread.start()
             #del(thread)
@@ -44,6 +44,7 @@ class Generator(threading.Thread):
             print("[log]currentRunThread: Reader= {readCount}, Writer= {writeCount}".format(readCount=globcfg.currentRunThreadCount['Reader'],writeCount=globcfg.currentRunThreadCount['Writer']))
             time.sleep(getRandomInterval(globcfg.lamGen))
             choice=random.randint(0,1)
+            #noWhere→scheduling(產生thread到scheduler但還沒run)
             if(choice):
                 print("[log]Generate thread {number} : {name}".format(number=globcfg.threadNumber,name="Reader"))
                 globcfg.waitingList.append(Reader.Reader(self.book,self.lock,globcfg.threadNumber)) #new Reader
@@ -59,16 +60,17 @@ class Scheduler(threading.Thread):
     def run(self):
         print("[log]Scheduler start...")
         counter={'Writer':0,'Reader':0}
-        currentThreadNumber=0
+
         while(True):
             for thread in globcfg.waitingList:
+                #Scheduling→wait
                 if(thread.name==globcfg.priority and not thread.on):
                     globcfg.currentRunThreadCount[globcfg.priority]+=1
                     thread.start()
                     counter[globcfg.priority] += 1
                     if (counter[globcfg.priority] >= globcfg.starveThreshold):
-                        currentThreadNumber=thread.id
-                        avoidStarvation(currentThreadNumber)
+                        currentThreadId=thread.id
+                        avoidStarvation(currentThreadId)
                         counter[globcfg.priority]=0
                     #del(thread)
                 elif(globcfg.currentRunThreadCount['Writer']==0 and globcfg.currentRunThreadCount['Reader']==0 and not thread.on):

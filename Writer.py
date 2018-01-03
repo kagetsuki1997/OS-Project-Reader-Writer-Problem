@@ -22,3 +22,4 @@ class Writer(threading.Thread):
         self.book.end_writing()
         print ("The writer " + str(self.id) + " leaves the writing room")
 
+
