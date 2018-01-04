@@ -1,5 +1,5 @@
 import threading,globcfg
-import time,random
+import random
 from Gui import Gui
 
 class Reader(threading.Thread):
@@ -20,7 +20,8 @@ class Reader(threading.Thread):
         self.book.want_to_read()
         print("The reader " + str(self.id) + " begins reading")
         self.gui.change_state("R", self.id, self.gui.r_waiting, self.gui.filing)
-        time.sleep(random.expovariate(1/globcfg.lamRW)/10)
+        execute_time = random.expovariate(1 / globcfg.lamRW) / 10
+        globcfg.event.wait(execute_time)
         print("The reader " + str(self.id) + " ends reading")
         self.gui.change_state("R", self.id, self.gui.filing, self.gui.nowhere)
         self.book.end_reading()

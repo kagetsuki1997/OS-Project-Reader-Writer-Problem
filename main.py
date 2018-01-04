@@ -14,6 +14,7 @@ def main():
     generator=SystemControl.Generator(book, g)
     scheduler=SystemControl.Scheduler()
 
+
     generator.start()
     scheduler.start()
 

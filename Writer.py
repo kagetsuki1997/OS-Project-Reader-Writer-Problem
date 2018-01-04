@@ -1,5 +1,5 @@
 import threading,globcfg
-import time,random
+import random
 from Gui import Gui
 
 class Writer(threading.Thread):
@@ -20,7 +20,8 @@ class Writer(threading.Thread):
         self.book.want_to_write()
         print ("The writer " + str(self.id) + " begins writing")
         self.gui.change_state("W", self.id, self.gui.w_waiting, self.gui.filing)
-        time.sleep(random.expovariate(1 / globcfg.lamRW)/10)
+        execute_time=random.expovariate(1 / globcfg.lamRW)/10
+        globcfg.event.wait(execute_time)
         print ("The writer " + str(self.id) + " ends writing")
         self.gui.change_state("W", self.id, self.gui.filing, self.gui.nowhere)
         self.book.end_writing()

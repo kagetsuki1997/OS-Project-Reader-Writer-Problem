@@ -2,6 +2,7 @@ import pygame
 import math
 import threading
 import time
+import globcfg
 
 # Colors
 # Define rgb value for colors
@@ -95,6 +96,7 @@ class Gui():
             # detect quit
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    globcfg.event.set()
                     pygame.quit()
                     quit()
 

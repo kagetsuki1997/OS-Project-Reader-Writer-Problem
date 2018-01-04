@@ -41,9 +41,10 @@ class Generator(threading.Thread):
         self.lock=threading.Lock()
     def run(self):
         print("[log]Generator start...")
-        while(True):
+        while(not globcfg.event.is_set()):
             print("[log]currentRunThread: Reader= {readCount}, Writer= {writeCount}".format(readCount=globcfg.currentRunThreadCount['Reader'],writeCount=globcfg.currentRunThreadCount['Writer']))
-            time.sleep(getRandomInterval(globcfg.lamGen))
+            genterate_time=getRandomInterval(globcfg.lamGen)
+            globcfg.event.wait(genterate_time)
             choice=random.randint(0,1)
             #noWhere→scheduling(產生thread到scheduler但還沒run)
             if(choice):
@@ -64,7 +65,7 @@ class Scheduler(threading.Thread):
         print("[log]Scheduler start...")
         counter={'Writer':0,'Reader':0}
 
-        while(True):
+        while(not globcfg.event.is_set()):
             for thread in globcfg.waitingList:
                 #Scheduling→wait
                 if(thread.name==globcfg.priority and not thread.on):
