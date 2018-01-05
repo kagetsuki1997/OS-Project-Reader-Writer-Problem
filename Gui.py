@@ -9,7 +9,13 @@ import globcfg
 Black = (0, 0, 0)
 White = (255, 255, 255)
 Red = (255, 0, 0)
+Green = (0, 255, 0)
+Blue = (0, 0, 255)
 
+# Give Magic number meaning
+# for function draw_text_in_middle
+useTxtWidth = 0
+useTxtHeight = 0
 
 class Gui():
     def __init__(self):
@@ -28,6 +34,7 @@ class Gui():
         self.nowhere = []
         self.lists_lock = threading.Lock()
 
+        
         # test list input
         # for i in range(20):
         #     letter = "R"
@@ -88,6 +95,9 @@ class Gui():
         file_capacity = file_num_row, file_num_col \
                       = int(file_height / self.letter_height), int(file_width / self.letter_width)
 
+        # Boolean variables's initial value
+        recentGenerateTime = None  # msecs from pygame.init()
+        
         ####################################################################
         ####                   Main Animation Loop                      ####
         ####################################################################
@@ -106,23 +116,53 @@ class Gui():
             # draw_text print text on text bar to be the block's title
             self.draw_block(schedule_x, schedule_y, schedule_width,
                             schedule_height, White)
-            self.draw_text_in_middle("Scheduling", 0, 0, schedule_width,
-                                     text_bar_width, White, title_font_size)
+            self.draw_text_in_middle("Scheduling", White, title_font_size,
+                                     0, 0,
+                                     schedule_width, text_bar_width)
             self.draw_block(w_wait_x, w_wait_y, w_wait_width, w_wait_height,
                             White)
-            self.draw_text_in_middle("Writer_wait", w_wait_x,
-                                     (w_wait_y - text_bar_width), w_wait_width,
-                                     text_bar_width, White, title_font_size)
+            self.draw_text_in_middle("Writer_wait", White, title_font_size,
+                                     w_wait_x, (w_wait_y - text_bar_width),
+                                     w_wait_width, text_bar_width)
             self.draw_block(r_wait_x, r_wait_y, r_wait_width, r_wait_height,
                             White)
-            self.draw_text_in_middle("Reader_wait", r_wait_x,
-                                     (r_wait_y - text_bar_width), r_wait_width,
-                                     text_bar_width, White, title_font_size)
+            self.draw_text_in_middle("Reader_wait", White, title_font_size,
+                                     r_wait_x, (r_wait_y - text_bar_width),
+                                     r_wait_width, text_bar_width)
             self.draw_block(file_x, file_y, file_width, file_height, White)
-            self.draw_text_in_middle("File", file_x, (file_y - text_bar_width),
-                                     file_width, text_bar_width, White,
-                                     title_font_size)
+            self.draw_text_in_middle("File (" + globcfg.priority + " First)", White, title_font_size,
+                                     file_x, (file_y - text_bar_width),
+                                     file_width, text_bar_width)
 
+            # Draw Extra info
+            # execution time
+            exeTimeFormatStr = "time: " + self.msecToFormatedStr(pygame.time.get_ticks())
+            exeTimeFormatStr_size = self.txtSize(exeTimeFormatStr, title_font_size)
+            self.draw_text_in_middle(exeTimeFormatStr, White, title_font_size,
+                                     self.window_width - exeTimeFormatStr_size[0] - 10, 0,
+                                     useTxtWidth, text_bar_width)
+            
+            # recent generate reader/writer time
+            globcfg.newGenerate_lock.acquire()
+            if globcfg.newGenerate is True:
+                recentGenerateTime = pygame.time.get_ticks()
+                globcfg.newGenerate = False
+            globcfg.newGenerate_lock.release()
+            if recentGenerateTime is not None:
+                generateTimeFormatStr = "generate time: " + self.msecToFormatedStr(recentGenerateTime)
+                generateTimeFormatStr_size = self.txtSize(generateTimeFormatStr, title_font_size)
+                self.draw_text_in_middle(generateTimeFormatStr, White, title_font_size,
+                                         self.window_width - exeTimeFormatStr_size[0] - generateTimeFormatStr_size[0] - 20, 0,
+                                         useTxtWidth, text_bar_width)
+
+            # now in function avoid_starvation
+            globcfg.inAvoidStarvation_lock.acquire()
+            if globcfg.inAvoidStarvation is True:
+                self.draw_text_in_middle("Avoid Starvation progressing", Red, title_font_size,
+                                         5, 0,
+                                         useTxtWidth, titleBarWidth)
+            globcfg.inAvoidStarvation_lock.release()
+                
             self.lists_lock.acquire()
             # draw readers and writers contained by each blocks
             self.draw_list(self.scheduling, schedule_x, schedule_y,
@@ -172,6 +212,20 @@ class Gui():
             time.sleep(1)
             self.lists_lock.release()
 
+    def msecToFormatedStr(self, msec):
+        sec = msec / 10 ** 3
+        minute = int(sec / 60)
+        sec = int(sec % 60)
+        # %02d means decimal, if less than 2 digit, use 0 to fill (special use of %(number)d)
+        return ('%02d' % minute) + ":" + ('%02d' % sec)
+
+    def txtSize(self, txt, font_size, fontType=None):
+        if fontType is not None:
+            return pygame.font.SysFont(None, font_size).size(txt)
+        else:
+            return pygame.font.Font(fontType, font_size).size(txt)
+            # Or pygame.font.SysFont(fontType, font_size) to use font in system
+            
     ###########################################################################
     ####                       Drawing Tools                                ###
     ###########################################################################
@@ -204,26 +258,40 @@ class Gui():
 
     # Draw W/R which represents writer/reader
     def draw_er(self, letter, x, y, idNumber):
-        self.draw_text_in_middle(letter, x, y, self.letter_width,
-                                 self.letter_height, Black,
-                                 self.letter_font_size)
-        self.draw_text_in_middle(
-            str(idNumber), (self.letter_width - self.id_rect_width + x),
-            (self.letter_height - self.id_rect_height + y), self.id_rect_width,
-            self.id_rect_height, Red, self.id_font_size)
+        # draw letter
+        self.draw_text_in_middle(letter, Black, self.letter_font_size,
+                                 x, y,
+                                 self.letter_width, self.letter_height)
+        # draw little id number
+        self.draw_text_in_middle(str(idNumber), Red, self.id_font_size,
+                                 (self.letter_width - self.id_rect_width + x), (self.letter_height - self.id_rect_height + y),
+                                 self.id_rect_width, self.id_rect_height)
 
+        
     # Draw Block
     def draw_block(self, x, y, w, h, color):
         pygame.draw.rect(self.gameWindow, color, [x, y, w, h])
 
+    def draw_text(self, txt, x, y, color, font_size):
+        font = pygame.font.SysFont(None, font_size)
+        Text = font.render(txt, True, color)
+        self.gameWindow.blit(Text, (x, y))
+        
     def text_ojects(self, msg, font, color):
         textSurface = font.render(msg, True, color)
         return textSurface, textSurface.get_rect()
 
     # Given a Rectangle area, draw text in the middle of it
-    def draw_text_in_middle(self, txt, x, y, w, h, color, font_size):
+    # if w/h use 0, means use text itself's weight/hight
+    def draw_text_in_middle(self, txt, color, font_size,
+                            x, y,
+                            w=0, h=0):
         font = pygame.font.SysFont(None, font_size)
         TextSurf, TextRect = self.text_ojects(txt, font, color)
+        if w == 0:
+            w = font.size(txt)[0]
+        if h == 0:
+            h = font.size(txt)[1]
         TextRect.center = ((w / 2) + x, (h / 2) + y)
         self.gameWindow.blit(TextSurf, TextRect)
 

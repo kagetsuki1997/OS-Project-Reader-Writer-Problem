@@ -13,7 +13,6 @@ class Book:
         try:
             while self.writers > 0:
                 self.condR.wait()
-            #reader wait→file
             self.readers += 1
             self.condR.notify()
         finally:
@@ -35,7 +34,6 @@ class Book:
         try:
             while self.writers > 0 or self.readers > 0:
                 self.condW.wait()
-            #writer wait→file
             self.writers += 1
         finally:
             self.condR.release()

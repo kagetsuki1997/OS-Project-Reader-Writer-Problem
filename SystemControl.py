@@ -24,13 +24,19 @@ def avoidStarvation(currentThreadId):
         time.sleep(1)
 
     print("--Avoid Starvation Progress Start--")
-
+    globcfg.inAvoidStarvation_lock.acquire()
+    globcfg.inAvoidStarvation = True
+    globcfg.inAvoidStarvation_lock.release()
+    
     for thread in globcfg.waitingList:
         if(thread.name==target and thread.id <= currentThreadId and not thread.on):
             globcfg.currentRunThreadCount[target] += 1
-            thread.start()
-            #del(thread)
+            thread.start()        
+            
     print("--Avoid Starvation Progress End--")
+    globcfg.inAvoidStarvation_lock.acquire()
+    globcfg.inAvoidStarvation = False
+    globcfg.inAvoidStarvation_lock.release()
 
 
 class Generator(threading.Thread):
@@ -46,7 +52,13 @@ class Generator(threading.Thread):
             genterate_time=getRandomInterval(globcfg.lamGen)
             globcfg.event.wait(genterate_time)
             choice=random.randint(0,1)
-            #noWhere→scheduling(產生thread到scheduler但還沒run)
+            # generate a new thread
+
+            # inform gui update generate time
+            globcfg.newGenerate_lock.acquire()
+            globcfg.newGenerate = True
+            globcfg.newGenerate_lock.release()
+            
             if(choice):
                 print("[log]Generate thread {number} : {name}".format(number=globcfg.threadNumber,name="Reader"))
                 self.gui.change_state("R", globcfg.threadNumber, self.gui.nowhere, self.gui.scheduling)
