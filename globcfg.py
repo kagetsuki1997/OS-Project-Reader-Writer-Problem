@@ -15,7 +15,11 @@ global inAvoidStarvation
 inAvoidStarvation = False
 global inAvoidStarvation_lock
 inAvoidStarvation_lock = threading.Lock()
-global newGenerate
-newGenerate = False
-global newGenerate_lock
-newGenerate_lock = threading.Lock()
+global generate_time_globalCopy
+generate_time_globalCopy = 0
+global generateTime_lock
+generateTime_lock = threading.Lock()
+global executionTime_globalcopy
+executionTime_globalcopy = 0
+global executionTime_globalcopy_lock
+executionTime_globalcopy_lock = threading.Lock()

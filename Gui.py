@@ -136,24 +136,22 @@ class Gui():
 
             # Draw Extra info
             # execution time
-            exeTimeFormatStr = "time: " + self.msecToFormatedStr(pygame.time.get_ticks())
+            globcfg.executionTime_globalcopy_lock.acquire()
+            exeTimeFormatStr = "File Time: " + ('%05.2f' % globcfg.executionTime_globalcopy)
+            globcfg.executionTime_globalcopy_lock.release()            
             exeTimeFormatStr_size = self.txtSize(exeTimeFormatStr, title_font_size)
             self.draw_text_in_middle(exeTimeFormatStr, White, title_font_size,
                                      self.window_width - exeTimeFormatStr_size[0] - 10, 0,
                                      useTxtWidth, text_bar_width)
             
             # recent generate reader/writer time
-            globcfg.newGenerate_lock.acquire()
-            if globcfg.newGenerate is True:
-                recentGenerateTime = pygame.time.get_ticks()
-                globcfg.newGenerate = False
-            globcfg.newGenerate_lock.release()
-            if recentGenerateTime is not None:
-                generateTimeFormatStr = "generate time: " + self.msecToFormatedStr(recentGenerateTime)
-                generateTimeFormatStr_size = self.txtSize(generateTimeFormatStr, title_font_size)
-                self.draw_text_in_middle(generateTimeFormatStr, White, title_font_size,
-                                         self.window_width - exeTimeFormatStr_size[0] - generateTimeFormatStr_size[0] - 20, 0,
-                                         useTxtWidth, text_bar_width)
+            globcfg.generateTime_lock.acquire()
+            generateTimeFormatStr = "Generate Time: " + ('%05.2f' % globcfg.generate_time_globalCopy)
+            globcfg.generateTime_lock.release()            
+            generateTimeFormatStr_size = self.txtSize(generateTimeFormatStr, title_font_size)
+            self.draw_text_in_middle(generateTimeFormatStr, White, title_font_size,
+                                     self.window_width - exeTimeFormatStr_size[0] - generateTimeFormatStr_size[0] - 40, 0,
+                                     useTxtWidth, text_bar_width)
 
             # now in function avoid_starvation
             globcfg.inAvoidStarvation_lock.acquire()

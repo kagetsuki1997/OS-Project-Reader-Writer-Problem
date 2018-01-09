@@ -50,15 +50,13 @@ class Generator(threading.Thread):
         while(not globcfg.event.is_set()):
             print("[log]currentRunThread: Reader= {readCount}, Writer= {writeCount}".format(readCount=globcfg.currentRunThreadCount['Reader'],writeCount=globcfg.currentRunThreadCount['Writer']))
             genterate_time=getRandomInterval(globcfg.lamGen)
+            globcfg.generateTime_lock.acquire()
+            globcfg.generate_time_globalCopy = genterate_time
+            globcfg.generateTime_lock.release()
             globcfg.event.wait(genterate_time)
             choice=random.randint(0,1)
             # generate a new thread
 
-            # inform gui update generate time
-            globcfg.newGenerate_lock.acquire()
-            globcfg.newGenerate = True
-            globcfg.newGenerate_lock.release()
-            
             if(choice):
                 print("[log]Generate thread {number} : {name}".format(number=globcfg.threadNumber,name="Reader"))
                 self.gui.change_state("R", globcfg.threadNumber, self.gui.nowhere, self.gui.scheduling)

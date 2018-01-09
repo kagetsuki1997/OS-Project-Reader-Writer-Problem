@@ -21,6 +21,9 @@ class Writer(threading.Thread):
         print ("The writer " + str(self.id) + " begins writing")
         self.gui.change_state("W", self.id, self.gui.w_waiting, self.gui.filing)
         execute_time=random.expovariate(1 / globcfg.lamRW)/10
+        globcfg.executionTime_globalcopy_lock.acquire()
+        globcfg.executionTime_globalcopy = execute_time
+        globcfg.executionTime_globalcopy_lock.release()
         globcfg.event.wait(execute_time)
         print ("The writer " + str(self.id) + " ends writing")
         self.gui.change_state("W", self.id, self.gui.filing, self.gui.nowhere)

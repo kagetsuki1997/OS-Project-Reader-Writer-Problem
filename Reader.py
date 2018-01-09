@@ -21,6 +21,9 @@ class Reader(threading.Thread):
         print("The reader " + str(self.id) + " begins reading")
         self.gui.change_state("R", self.id, self.gui.r_waiting, self.gui.filing)
         execute_time = random.expovariate(1 / globcfg.lamRW) / 10
+        globcfg.executionTime_globalcopy_lock.acquire()
+        globcfg.executionTime_globalcopy = execute_time
+        globcfg.executionTime_globalcopy_lock.release()
         globcfg.event.wait(execute_time)
         print("The reader " + str(self.id) + " ends reading")
         self.gui.change_state("R", self.id, self.gui.filing, self.gui.nowhere)
