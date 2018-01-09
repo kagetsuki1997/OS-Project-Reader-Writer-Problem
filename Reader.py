@@ -20,7 +20,7 @@ class Reader(threading.Thread):
         self.book.want_to_read()
         print("The reader " + str(self.id) + " begins reading")
         self.gui.change_state("R", self.id, self.gui.r_waiting, self.gui.filing)
-        execute_time = random.expovariate(1 / globcfg.lamRW) / 10
+        execute_time = random.expovariate(10 / globcfg.lamRW)
         globcfg.executionTime_globalcopy_lock.acquire()
         globcfg.executionTime_globalcopy = execute_time
         globcfg.executionTime_globalcopy_lock.release()

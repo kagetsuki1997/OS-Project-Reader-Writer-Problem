@@ -1,12 +1,9 @@
-import numpy as np
 import random,threading,time
 import Reader,Writer,globcfg
 
 
 def getRandomInterval(lam=10):
-    #poi=np.random.poisson(lam,1)
-    t=random.expovariate(1/lam)/10
-    #print("[log]randomTime= %.2f"%t)
+    t=random.expovariate(10/lam)
     return t
 
 def togglePriority():
@@ -17,6 +14,11 @@ def togglePriority():
 
 def avoidStarvation(currentThreadId):
     target=togglePriority()
+
+    globcfg.inAvoidStarvation_lock.acquire()
+    globcfg.inAvoidStarvation = True
+    globcfg.inAvoidStarvation_lock.release()
+
     print("**Starvation Detected**\n {priority}s, you are too greedy!\nLet's give {target} a chance~".format(priority=globcfg.priority,target=target))
 
     while(globcfg.currentRunThreadCount['Writer']!=0 or globcfg.currentRunThreadCount['Reader']!=0):
@@ -24,9 +26,7 @@ def avoidStarvation(currentThreadId):
         time.sleep(1)
 
     print("--Avoid Starvation Progress Start--")
-    globcfg.inAvoidStarvation_lock.acquire()
-    globcfg.inAvoidStarvation = True
-    globcfg.inAvoidStarvation_lock.release()
+
     
     for thread in globcfg.waitingList:
         if(thread.name==target and thread.id <= currentThreadId and not thread.on):
@@ -87,7 +87,7 @@ class Scheduler(threading.Thread):
                         avoidStarvation(currentThreadId)
                         counter[globcfg.priority]=0
                     #del(thread)
-                elif(globcfg.currentRunThreadCount['Writer']==0 and globcfg.currentRunThreadCount['Reader']==0 and not thread.on):
+                elif(globcfg.currentRunThreadCount[globcfg.priority]==0  and not thread.on):
                     globcfg.currentRunThreadCount[togglePriority()]+=1
                     print("[log]No thread running!~")
                     thread.start()
